@@ -61,7 +61,9 @@ type ZMQCtx     = Ptr ()
 type ZMQSocket  = Ptr ()
 type ZMQPollPtr = Ptr ZMQPoll
 
+#if __GLASGOW_HASKELL__ < 800
 #let alignment t = "%lu", (unsigned long)offsetof(struct {char x__; t (y__); }, y__)
+#endif
 
 -----------------------------------------------------------------------------
 -- Socket Types
@@ -272,7 +274,7 @@ foreign import ccall unsafe "zmq.h zmq_ctx_new"
 foreign import ccall unsafe "zmq.h zmq_ctx_shutdown"
     c_zmq_ctx_shutdown :: ZMQCtx -> IO CInt
 
-foreign import ccall unsafe "zmq.h zmq_ctx_term"
+foreign import ccall safe "zmq.h zmq_ctx_term"
     c_zmq_ctx_term :: ZMQCtx -> IO CInt
 
 foreign import ccall unsafe "zmq.h zmq_ctx_get"
