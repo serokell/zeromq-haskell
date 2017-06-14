@@ -1,3 +1,7 @@
+0.6.6
+-----------------------------------------------------------------------------
+- Declare `zmq_ctx_term` FFI import as safe.
+
 0.6.5
 -----------------------------------------------------------------------------
 - `MonadBase` and `MonadBaseControl` instances for ZMQ (by Maciej Woś).
