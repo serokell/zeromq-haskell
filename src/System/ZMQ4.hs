@@ -178,6 +178,7 @@ module System.ZMQ4
   , setTcpKeepAliveIdle
   , setTcpKeepAliveInterval
   , setXPubVerbose
+  , setZapDomain
 
     -- * Restrictions
   , Data.Restricted.restrict
@@ -759,6 +760,10 @@ setTcpKeepAliveInterval = setInt32OptFromRestricted B.tcpKeepAliveInterval
 -- | <http://api.zeromq.org/4-0:zmq-setsockopt zmq_setsockopt ZMQ_XPUB_VERBOSE>.
 setXPubVerbose :: Bool -> Socket XPub -> IO ()
 setXPubVerbose x s = setIntOpt s B.xpubVerbose (bool2cint x)
+
+-- | <http://api.zeromq.org/4-0:zmq-getsockopt zmq_getsockopt ZMQ_ZAP_DOMAIN>.
+setZapDomain :: SB.ByteString -> Socket a -> IO ()
+setZapDomain x s = setByteStringOpt s B.zapDomain x
 
 -- | Bind the socket to the given address
 -- (cf. <http://api.zeromq.org/4-0:zmq-bind zmq_bind>).
