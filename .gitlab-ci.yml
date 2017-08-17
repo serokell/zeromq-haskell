@@ -1,26 +1,17 @@
-before_script:
-  - apt-get update
-  - apt-get install -y libstdc++-4.9-dev g++ libzmq3-dev pkg-config
-  - cabal update
+image: fpco/stack-build:lts
+
+test:8.2:
+  script:
+    - stack --no-terminal --resolver nightly-2017-07-31 --install-ghc test
 
 test:8.0:
-  image: haskell:8.0
   script:
-    - cabal install --enable-test --only-dep -j
-    - cabal build
-    - cabal test
-    - cabal bench
+    - stack --no-terminal --resolver lts-9 --install-ghc test
 
 test:7.10:
-  image: haskell:7.10
   script:
-    - cabal install --enable-test --only-dep -j
-    - cabal build
-    - cabal test
+    - stack --no-terminal --resolver lts-6 --install-ghc test
 
 test:7.8:
-  image: haskell:7.8
   script:
-    - cabal install --enable-test --only-dep -j
-    - cabal build
-    - cabal test
+    - stack --no-terminal --resolver lts-2 --install-ghc test

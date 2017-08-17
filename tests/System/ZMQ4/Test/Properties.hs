@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE GADTs                #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module System.ZMQ4.Test.Properties where
 
@@ -99,15 +98,13 @@ prop_set_get_socket_option t opt = monadicIO $ do
             ReceiveTimeout val  -> (ieq (rvalue val)) <$> (setReceiveTimeout val s >> receiveTimeout s)
             SendHighWM val      -> (ieq (rvalue val)) <$> (setSendHighWM val s >> sendHighWM s)
             SendTimeout val     -> (ieq (rvalue val)) <$> (setSendTimeout val s >> sendTimeout s)
-            ZapDomain val       -> (bseq (rvalue val)) <$> (setZapDomain val s >> zapDomain s)
+            ZapDomain val       -> (== (rvalue val)) <$> (setZapDomain val s >> zapDomain s)
+            PlainPassword val   -> (== (rvalue val)) <$> (setPlainPassword val s >> plainPassword s)
+            PlainUsername val   -> (== (rvalue val)) <$> (setPlainUserName val s >> plainUserName s)
     QM.assert r
   where
     ieq :: (Integral i, Integral k) => i -> k -> Bool
     ieq i k  = (fromIntegral i :: Int) == (fromIntegral k :: Int)
-    -- Should System.ZMQ4.Internal.getCStrOpt include the \NUL
-    -- terminator in responses? This seems like testing for a bug
-    bseq :: ByteString -> ByteString -> Bool
-    bseq i k = CB.snoc i '\NUL' ==  k
 
 last_endpoint :: IO ()
 last_endpoint = do
@@ -118,15 +115,15 @@ last_endpoint = do
         lastEndpoint s
     a @=? a'
 
-prop_subscribe :: (Subscriber a, SocketType a) => a -> ByteString -> Property
-prop_subscribe t subs = monadicIO $ run $
+prop_subscribe :: (Subscriber a, SocketType a) => a -> Bytes -> Property
+prop_subscribe t (Bytes subs) = monadicIO $ run $
     runZMQ $ do
         s <- socket t
         subscribe s subs
         unsubscribe s subs
 
-prop_send_receive :: (SocketType a, SocketType b, Receiver b, Sender a) => a -> b -> ByteString -> Property
-prop_send_receive a b msg = monadicIO $ do
+prop_send_receive :: (SocketType a, SocketType b, Receiver b, Sender a) => a -> b -> Bytes -> Property
+prop_send_receive a b (Bytes msg) = monadicIO $ do
     msg' <- run $ runZMQ $ do
         sender   <- socket a
         receiver <- socket b
@@ -137,8 +134,8 @@ prop_send_receive a b msg = monadicIO $ do
         liftIO $ wait x
     QM.assert (msg == msg')
 
-prop_pub_sub :: (SocketType a, Subscriber b, SocketType b, Sender a, Receiver b) => a -> b -> ByteString -> Property
-prop_pub_sub a b msg = monadicIO $ do
+prop_pub_sub :: (SocketType a, Subscriber b, SocketType b, Sender a, Receiver b) => a -> b -> Bytes -> Property
+prop_pub_sub a b (Bytes msg) = monadicIO $ do
     msg' <- run $ runZMQ $ do
         pub <- socket a
         sub <- socket b
@@ -159,8 +156,10 @@ prop_connect_disconnect (AnySocket t0, AnySocket t) = monadicIO $ run $
         connect s "inproc://endpoint"
         disconnect s "inproc://endpoint"
 
-instance Arbitrary ByteString where
-    arbitrary = CB.pack . filter (/= '\0') <$> arbitrary
+newtype Bytes = Bytes { unbytes :: ByteString } deriving Show
+
+instance Arbitrary Bytes where
+    arbitrary = Bytes . CB.filter (/= '\NUL') . CB.pack <$> arbitrary
 
 data GetOpt =
     Events          Int
@@ -187,6 +186,8 @@ data SetOpt =
   | SendHighWM      (Restricted (N0, Int32) Int)
   | SendTimeout     (Restricted (Nneg1, Int32) Int)
   | ZapDomain       (Restricted (N0, N254) ByteString)
+  | PlainPassword   (Restricted (N1, N254) ByteString)
+  | PlainUsername   (Restricted (N1, N254) ByteString)
   deriving Show
 
 instance Arbitrary GetOpt where
@@ -214,8 +215,10 @@ instance Arbitrary SetOpt where
       , SendHighWM      . toR0     <$> (arbitrary :: Gen Int32) `suchThat` (>=  0)
       , SendTimeout     . toRneg1  <$> (arbitrary :: Gen Int32) `suchThat` (>= -1)
       , MaxMessageSize  . toRneg1' <$> (arbitrary :: Gen Int64) `suchThat` (>= -1)
-      , ZapDomain       . restrict <$> (arbitrary :: Gen ByteString)
-      , Identity . fromJust . toRestricted <$> arbitrary `suchThat` (\s -> SB.length s > 0 && SB.length s < 255)
+      , ZapDomain       . restrict . unbytes <$> arbitrary
+      , PlainPassword   . restrict . unbytes <$> arbitrary
+      , PlainUsername   . restrict . unbytes <$> arbitrary
+      , Identity . fromJust . toRestricted <$> (unbytes <$> arbitrary) `suchThat` (\s -> SB.length s > 0 && SB.length s < 255)
       ]
 
 toR1 :: Int32 -> Restricted (N1, Int32) Int

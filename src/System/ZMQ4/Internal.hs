@@ -34,6 +34,7 @@ module System.ZMQ4.Internal
     , setInt32OptFromRestricted
     , ctxIntOption
     , setCtxIntOption
+    , getBytesOpt
     , getByteStringOpt
     , setByteStringOpt
 
@@ -62,12 +63,11 @@ module System.ZMQ4.Internal
 import Control.Applicative
 import Control.Monad (foldM_, when, void)
 import Control.Monad.IO.Class
-import Control.Exception
 import Data.IORef (IORef, mkWeakIORef, readIORef, atomicModifyIORef)
 
 import Foreign hiding (throwIfNull, void)
 import Foreign.C.String
-import Foreign.C.Types (CInt, CSize)
+import Foreign.C.Types (CInt)
 
 import Data.IORef (newIORef)
 import Data.Restricted
@@ -252,26 +252,29 @@ setStrOpt sock opt str = onSocket "setStrOpt" sock $ \s ->
     throwIfMinus1Retry_ "setStrOpt" . withCStringLen str $ setCStrOpt s opt
 
 getIntOpt :: (Storable b, Integral b) => Socket a -> ZMQOption -> b -> IO b
-getIntOpt sock (ZMQOption o) i = onSocket "getIntOpt" sock $ \s -> do
-    bracket (new i) free $ \iptr ->
-        bracket (new (fromIntegral . sizeOf $ i :: CSize)) free $ \jptr -> do
-            throwIfMinus1Retry_ "getIntOpt" $
-                c_zmq_getsockopt s (fromIntegral o) (castPtr iptr) jptr
-            peek iptr
+getIntOpt sock (ZMQOption o) i = onSocket "getIntOpt" sock $ \s ->
+    with i                         $ \iptr ->
+    with (fromIntegral $ sizeOf i) $ \jptr -> do
+        throwIfMinus1Retry_ "getIntOpt" $
+            c_zmq_getsockopt s (fromIntegral o) (castPtr iptr) jptr
+        peek iptr
 
 getCStrOpt :: (CStringLen -> IO s) -> Socket a -> ZMQOption -> IO s
 getCStrOpt peekA sock (ZMQOption o) = onSocket "getCStrOpt" sock $ \s ->
-    bracket (mallocBytes 255) free $ \bPtr ->
-    bracket (new (255 :: CSize)) free $ \sPtr -> do
+    with 256        $ \nptr ->
+    allocaBytes 256 $ \bptr -> do
         throwIfMinus1Retry_ "getCStrOpt" $
-            c_zmq_getsockopt s (fromIntegral o) (castPtr bPtr) sPtr
-        peek sPtr >>= \len -> peekA (bPtr, fromIntegral len)
+            c_zmq_getsockopt s (fromIntegral o) (castPtr bptr) nptr
+        peek nptr >>= \len -> peekA (bptr, fromIntegral len)
 
 getStrOpt :: Socket a -> ZMQOption -> IO String
 getStrOpt = getCStrOpt (peekCString . fst)
 
 getByteStringOpt :: Socket a -> ZMQOption -> IO SB.ByteString
-getByteStringOpt = getCStrOpt SB.packCStringLen
+getByteStringOpt = getCStrOpt (SB.packCString . fst)
+
+getBytesOpt :: Socket a -> ZMQOption -> IO SB.ByteString
+getBytesOpt = getCStrOpt SB.packCStringLen
 
 getInt32Option :: ZMQOption -> Socket a -> IO Int
 getInt32Option o s = fromIntegral <$> getIntOpt s o (0 :: CInt)

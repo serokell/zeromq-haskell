@@ -468,7 +468,7 @@ immediate s = (== 1) <$> getInt32Option B.immediate s
 
 -- | <http://api.zeromq.org/4-0:zmq-getsockopt zmq_getsockopt ZMQ_IDENTITY>.
 identity :: Socket a -> IO SB.ByteString
-identity s = getByteStringOpt s B.identity
+identity s = getBytesOpt s B.identity
 
 -- | <http://api.zeromq.org/4-0:zmq-getsockopt zmq_getsockopt ZMQ_AFFINITY>.
 affinity :: Socket a -> IO Word64
