@@ -602,7 +602,7 @@ setTcpKeepAliveInterval i = liftIO . Z.setTcpKeepAliveInterval i . _unsocket
 setXPubVerbose :: Bool -> Socket z Z.XPub -> ZMQ z ()
 setXPubVerbose b = liftIO . Z.setXPubVerbose b . _unsocket
 
-setZapDomain :: ByteString -> Socket z t -> ZMQ z ()
+setZapDomain :: Restricted (N0, N254) ByteString -> Socket z t -> ZMQ z ()
 setZapDomain s = liftIO . Z.setZapDomain s . _unsocket
 
 -- * Low Level Functions
