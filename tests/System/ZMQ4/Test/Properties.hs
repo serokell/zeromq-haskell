@@ -99,10 +99,15 @@ prop_set_get_socket_option t opt = monadicIO $ do
             ReceiveTimeout val  -> (ieq (rvalue val)) <$> (setReceiveTimeout val s >> receiveTimeout s)
             SendHighWM val      -> (ieq (rvalue val)) <$> (setSendHighWM val s >> sendHighWM s)
             SendTimeout val     -> (ieq (rvalue val)) <$> (setSendTimeout val s >> sendTimeout s)
+            ZapDomain val       -> (bseq (rvalue val)) <$> (setZapDomain val s >> zapDomain s)
     QM.assert r
   where
     ieq :: (Integral i, Integral k) => i -> k -> Bool
     ieq i k  = (fromIntegral i :: Int) == (fromIntegral k :: Int)
+    -- Should System.ZMQ4.Internal.getCStrOpt include the \NUL
+    -- terminator in responses? This seems like testing for a bug
+    bseq :: ByteString -> ByteString -> Bool
+    bseq i k = CB.snoc i '\NUL' ==  k
 
 last_endpoint :: IO ()
 last_endpoint = do
@@ -181,6 +186,7 @@ data SetOpt =
   | SendBuf         (Restricted (N0, Int32) Int)
   | SendHighWM      (Restricted (N0, Int32) Int)
   | SendTimeout     (Restricted (Nneg1, Int32) Int)
+  | ZapDomain       (Restricted (N0, N254) ByteString)
   deriving Show
 
 instance Arbitrary GetOpt where
@@ -208,6 +214,7 @@ instance Arbitrary SetOpt where
       , SendHighWM      . toR0     <$> (arbitrary :: Gen Int32) `suchThat` (>=  0)
       , SendTimeout     . toRneg1  <$> (arbitrary :: Gen Int32) `suchThat` (>= -1)
       , MaxMessageSize  . toRneg1' <$> (arbitrary :: Gen Int64) `suchThat` (>= -1)
+      , ZapDomain       . restrict <$> (arbitrary :: Gen ByteString)
       , Identity . fromJust . toRestricted <$> arbitrary `suchThat` (\s -> SB.length s > 0 && SB.length s < 255)
       ]
 

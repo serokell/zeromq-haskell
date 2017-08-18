@@ -163,6 +163,7 @@ module System.ZMQ4.Monadic
   , setTcpKeepAliveIdle
   , setTcpKeepAliveInterval
   , setXPubVerbose
+  , setZapDomain
 
   -- * Error Handling
   , Z.ZMQError
@@ -600,6 +601,9 @@ setTcpKeepAliveInterval i = liftIO . Z.setTcpKeepAliveInterval i . _unsocket
 
 setXPubVerbose :: Bool -> Socket z Z.XPub -> ZMQ z ()
 setXPubVerbose b = liftIO . Z.setXPubVerbose b . _unsocket
+
+setZapDomain :: Restricted (N0, N254) ByteString -> Socket z t -> ZMQ z ()
+setZapDomain s = liftIO . Z.setZapDomain s . _unsocket
 
 -- * Low Level Functions
 
