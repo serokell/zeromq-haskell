@@ -2,7 +2,7 @@ image: fpco/stack-build:lts
 
 test:8.2:
   script:
-    - stack --no-terminal --resolver nightly-2017-07-31 --install-ghc test
+    - stack --no-terminal --resolver nightly-2017-12-10 --install-ghc test
 
 test:8.0:
   script:
