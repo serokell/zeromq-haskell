@@ -215,10 +215,10 @@ instance Arbitrary SetOpt where
       , SendHighWM      . toR0     <$> (arbitrary :: Gen Int32) `suchThat` (>=  0)
       , SendTimeout     . toRneg1  <$> (arbitrary :: Gen Int32) `suchThat` (>= -1)
       , MaxMessageSize  . toRneg1' <$> (arbitrary :: Gen Int64) `suchThat` (>= -1)
-      , ZapDomain       . restrict . unbytes <$> arbitrary
-      , PlainPassword   . restrict . unbytes <$> arbitrary
-      , PlainUsername   . restrict . unbytes <$> arbitrary
-      , Identity . fromJust . toRestricted <$> (unbytes <$> arbitrary) `suchThat` (\s -> SB.length s > 0 && SB.length s < 255)
+      , ZapDomain       . fromJust . toRestricted <$> (unbytes <$> arbitrary) `suchThat` (\s -> SB.length s >= 0 && SB.length s < 255)
+      , PlainPassword   . fromJust . toRestricted <$> (unbytes <$> arbitrary) `suchThat` (\s -> SB.length s >  0 && SB.length s < 255)
+      , PlainUsername   . fromJust . toRestricted <$> (unbytes <$> arbitrary) `suchThat` (\s -> SB.length s >  0 && SB.length s < 255)
+      , Identity        . fromJust . toRestricted <$> (unbytes <$> arbitrary) `suchThat` (\s -> SB.length s >  0 && SB.length s < 255)
       ]
 
 toR1 :: Int32 -> Restricted (N1, Int32) Int
