@@ -1,3 +1,11 @@
+0.7.0
+-----------------------------------------------------------------------------
+- Add `setZapDomain` (thanks to Alain O'Dea).
+- `ByteString`s returned from the following socket option getters will no
+  longer include the trailing NUL byte from the original C string:
+    * `plainUserName`
+    * `plainPassword`
+
 0.6.7
 -----------------------------------------------------------------------------
 - Bugfix release.
