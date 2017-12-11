@@ -1,5 +1,5 @@
 name:               zeromq4-haskell
-version:            0.6.7
+version:            0.7.0
 synopsis:           Bindings to ZeroMQ 4.x
 category:           System, FFI
 license:            MIT
@@ -9,7 +9,7 @@ maintainer:         Toralf Wittner <tw@dtex.org>
 copyright:          (c) 2010 - 2015 zeromq-haskell authors
 homepage:           https://gitlab.com/twittner/zeromq-haskell/
 stability:          experimental
-tested-With:        GHC == 8.0.2
+tested-With:        GHC == 8.2.2
 cabal-version:      >= 1.8
 build-type:         Simple
 extra-source-files:
@@ -77,6 +77,7 @@ test-suite zeromq-haskell-tests
     hs-source-dirs:   tests
     main-is:          tests.hs
     ghc-options:      -Wall -threaded
+    other-modules:    System.ZMQ4.Test.Properties
     build-depends:
           zeromq4-haskell
         , async

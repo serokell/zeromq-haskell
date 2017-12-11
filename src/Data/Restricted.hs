@@ -150,6 +150,12 @@ instance Restriction (N1, N254) ByteString where
     restrict s | B.length s < 1 = Restricted (B.singleton 0x20)
                | otherwise      = Restricted (B.take 254 s)
 
+instance Restriction (N0, N254) ByteString where
+    toRestricted s | check (0, 254) (B.length s) = Just $ Restricted s
+                   | otherwise                   = Nothing
+
+    restrict s = Restricted (B.take 254 s)
+
 -- Other constraints
 
 instance Restriction Div4 ByteString where
