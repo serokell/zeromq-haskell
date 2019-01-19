@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP                        #-}
+{-# LANGUAGE InterruptibleFFI           #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
@@ -372,7 +373,7 @@ foreign import ccall safe "zmq.h zmq_proxy"
 
 -- poll
 
-foreign import ccall safe "zmq.h zmq_poll"
+foreign import ccall interruptible "zmq.h zmq_poll"
     c_zmq_poll :: ZMQPollPtr -> CInt -> CLong -> IO CInt
 
 -- Z85 encode/decode
@@ -387,4 +388,3 @@ foreign import ccall unsafe "zmq.h zmq_z85_decode"
 
 foreign import ccall unsafe "zmq.h zmq_curve_keypair"
     c_zmq_curve_keypair :: CString -> CString -> IO CInt
-
